@@ -1,7 +1,29 @@
 <template>
   <div class="fansboard">
     <h1>{{msg}}</h1>
-    <!-- <svg width="900" height="600"></svg> -->
+    <div class="fancount">
+      <p>Total number of fans: {{totalFans}}</p>
+    </div>
+    <div class="geo">
+      <p>(Show Map Here)</p>
+      <FanLocation/>
+    </div>
+    <div class="row">
+      <div class="column" style="float: left;">
+        <div class="agecount">
+          <h3>Age Groups:</h3>
+          <ul v-for="(a, idx) in ageGroups" :key="idx">
+            <p>{{a.group}}: {{a.number}}</p>
+          </ul>
+        </div>
+      </div>
+      <div class="column" style="float: right;">
+        <div class="passion">
+          <h3>Popular Interests:</h3>
+          <InterestChart :interests="orderedVals"/>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -10,96 +32,117 @@
 <script src="https://d3js.org/topojson.v2.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 <script>
-var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height");
+import { auth, db } from '../main'
+import InterestChart from "./InterestChart";
+import FanLocation from "./FanLocation";
+import _ from 'lodash';
 
-var parseDate = d3.timeParse("%x");
-
-var color = d3.scaleTime()
-    .domain([new Date(1962, 0, 1), new Date(2006, 0, 1)])
-    .range(["black", "steelblue"])
-    .interpolate(d3.interpolateLab);
-
-var hexbin = d3.hexbin()
-    .extent([[0, 0], [width, height]])
-    .radius(10);
-
-var radius = d3.scaleSqrt()
-    .domain([0, 12])
-    .range([0, 10]);
-
-// Per https://github.com/topojson/us-atlas
-var projection = d3.geoAlbersUsa()
-    .scale(1280)
-    .translate([480, 300]);
-
-var path = d3.geoPath();
-
-d3.queue()
-    .defer(d3.json, "https://d3js.org/us-10m.v1.json")
-    .defer(d3.tsv, "walmart.tsv", typeWalmart)
-    .await(ready);
-
-function ready(error, us, walmarts) {
-  if (error) throw error;
-
-  svg.append("path")
-      .datum(topojson.feature(us, us.objects.nation))
-      .attr("class", "nation")
-      .attr("d", path);
-
-  svg.append("path")
-      .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
-      .attr("class", "states")
-      .attr("d", path);
-
-  svg.append("g")
-      .attr("class", "hexagon")
-    .selectAll("path")
-    .data(hexbin(walmarts).sort(function(a, b) { return b.length - a.length; }))
-    .enter().append("path")
-      .attr("d", function(d) { return hexbin.hexagon(radius(d.length)); })
-      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-      .attr("fill", function(d) { return color(d3.median(d, function(d) { return +d.date; })); });
-}
-
-function typeWalmart(d) {
-  var p = projection(d);
-  d[0] = p[0], d[1] = p[1];
-  d.date = parseDate(d.date);
-  return d;
-}
-// </script>
-// <script>
 export default {
   name: 'Fans',
+  components: {
+    InterestChart,
+    FanLocation
+  },
   data () {
     return {
       msg: 'Fans Data',
-      totalFollowers: 0
-
+      userId: '',
+      fans: [],
+      totalFans: 6500,
+      allFollowers: [],
+      ageGroups: [
+        {group: "0-18", number: 3000},
+        {group: "25-34", number: 2500},
+        {group: "34-100", number: 1000}
+      ], //TODO: Male/Female
+      interestsVals: [
+        {name: "art", value: 60}, {name: "beauty", value: 67}, {name: "cycling", value: 655},
+        {name: "dancing", value: 456}, {name: "edm", value: 875}, {name: "excercise", value: 40},
+        {name: "fashion", value: 3}, {name: "fitness", value: 850}, {name: "food", value: 789},
+        {name: "games", value: 600}, {name: "gardening", value: 15}, {name: "golf", value: 1000},
+        {name: "health", value: 900}, {name: "hunting", value: 965}, {name: "kayaking", value: 85},
+        {name: "love", value: 600}, {name: "music", value: 1500}, {name: "painting", value: 56}, 
+        {name: "photos", value: 452}, {name: "reading",value: 245}, {name: "running", value: 456}, 
+        {name: "skiing", value: 76}, {name: "sports", value: 1200}, {name: "swimming", value: 865}, 
+        {name: "travel", value: 764}, {name: "volunteer", value: 235}
+      ],
+      users: []
+    }
+  },
+  firestore () {
+    // this.userId = auth.currentUser.uid
+    return {
+      allFollowers: db.collection("follows"),
+      users: db.collection("users")
+    }
+  },
+  computed: {
+    // Gets total number of fans user has
+    getTotalFans() {
+      let total = 0;
+      for (let index = 0; index < this.allFollowers.length; index++) {
+        if(this.allFollowers[index].where("followed_id", "==", this.userId))
+          total++;
+          // Check if fan is in list
+          if(!fans.includes(this.allFollowers[index]))
+            this.fans.push(this.allFollowers[index]);
+      }
+      this.totalFans = total;
+      return total;
+    },
+    // Order interests in desc order
+    orderedVals() {
+      return _.orderBy(this.interestsVals, 'value').slice().reverse();
     }
   },
   methods: {
+    // Calculates age groups of fans
+    calculateAgeGroups() {
+      for (let index = 0; index < this.fans.length; index++) {
+        var dateString = getUserBirth(this.fans[index]);
 
+        var today = new Date();
+        var birthDate = new Date(dateString);
+        var age = today.getFullYear() - birthDate.getFullYear();
+        var m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate()))
+          age--;
+        
+        if(age < 19)
+          this.ageGroups[0].number++
+        else if(age > 33)
+          this.ageGroups[2].number++
+        else
+          this.ageGroups[1].number++
+      }
+    },
+    // Gets user birth date from users list
+    getUserBirth(fan) {
+      for (let index = 0; index < this.users.length; index++) {
+        if(this.users.uid == fan.follower_id)
+          return this.users.birth_date;
+      }
+    },
+    // Adding to interestVal list
+    countInterests() {
+      for (let index = 0; index < this.fans.length; index++) {
+        const arr = this.fans[index].interests;
+        for (let index = 0; index < arr.length; index++) {
+          if (arr[index] == true)
+            this.interestsVals[index].value++;          
+        }
+      }
+    },
+    // Gets top 10 interests of fans
+    getInterests(arr) {
+      return arr.slice(0, 10);
+    }
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.nation {
-  fill: #ddd;
-}
-.states {
-  fill: none;
-  stroke: #fff;
-  stroke-linejoin: round;
-}
-.hexagon {
-  stroke: rgb(250, 49, 65);
-}
 h1, h2 {
   font-weight: normal;
 }
@@ -113,5 +156,18 @@ li {
 }
 a {
   color: #42b983;
+}
+
+/* Create two equal columns that floats next to each other */
+.column {
+    width: 50%;
+    padding: 10px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
 }
 </style>

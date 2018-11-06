@@ -3,7 +3,7 @@
     <div class="header">
       <ul>
         <!-- Link to go to homepage -->
-        <li style="float:left"><a href="#" class="homelink">Fanmire</a></li> 
+        <li style="float:left"><a href="#" class="homelink">Fanmire</a></li>
         <!-- Dropdown Menu -->
         <li style="float:right" class="dropdown">
           <a href="javascript:void(0)" class="dropbtn">[User pic + name]</a>
@@ -122,7 +122,6 @@ export default {
   text-decoration: none;
   display: block;
   text-align: left;
-  
 }
 .dropdown-content a:hover {background-color: #f1f1f1}
 
