@@ -23,7 +23,6 @@
     <div class="nav">
       <ul>
         <button class="tab" v-on:click="makeActive('fansActive')">Fans</button>
-        <button class="tab" v-on:click="makeActive('entourageActive')">Entourage</button>
         <button class="tab" v-on:click="makeActive('postActive')">Posts</button>
         <button class="tab" v-on:click="makeActive('eventsActive')">Events</button>
       </ul>
@@ -31,11 +30,6 @@
 
     <div class="tabcontent" v-show="isActiveTab('fansActive')">
       <Fans/>
-    </div>
-
-    <div class="tabcontent" v-show="isActiveTab('entourageActive')">
-      <h3>Entourage component</h3>
-      <!-- Add component here -->
     </div>
 
     <div class="tabcontent" v-show="isActiveTab('postActive')">
@@ -137,7 +131,7 @@ export default {
   cursor: pointer;
   padding: 14px 16px;
   font-size: 17px;
-  width: 25%;
+  width: 33.33%;
 }
 .tab:hover {
   background-color: #A5A5A5;
@@ -147,6 +141,7 @@ export default {
 }
 .tabcontent {
   background-color:#848484;
+  /* background-color: beige */
   /* background-color:white; */
 }
 h1, h2 {

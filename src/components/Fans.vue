@@ -1,29 +1,49 @@
 <template>
   <div class="fansboard">
     <h1>{{msg}}</h1>
+
     <div class="fancount">
-      <p>Total number of fans: {{totalFans}}</p>
+      <p>Total number of fans:</p>
+      <p>{{totalFans}}</p>
+      <!-- <NewFansChart/> -->
     </div>
+
     <div class="geo">
-      <p>(Show Map Here)</p>
       <FanLocation/>
     </div>
-    <div class="row">
-      <div class="column" style="float: left;">
-        <div class="agecount">
-          <h3>Age Groups:</h3>
-          <ul v-for="(a, idx) in ageGroups" :key="idx">
-            <p>{{a.group}}: {{a.number}}</p>
-          </ul>
-        </div>
+
+    <!-- <div class="aftermap" style="background-color :#848484;">
+      <div class="agecount" style="float: left; width: 50%;">
+        <h3>Age Groups:</h3>
+        <ul v-for="(a, idx) in ageGroups" :key="idx">
+          <p>{{a.group}}: {{a.number}}</p>
+        </ul>
       </div>
-      <div class="column" style="float: right;">
-        <div class="passion">
-          <h3>Popular Interests:</h3>
-          <InterestChart :interests="orderedVals"/>
-        </div>
+      <div class="passion" style="float: right; width: 50%;">
+        <h3>Popular Interests:</h3>
+        <InterestChart :interests="orderedVals"/>
       </div>
+    </div> -->
+
+    <div class="nav">
+      <ul>
+        <button class="tab" v-on:click="makeActive('fansInterest')">FANS Interest</button>
+        <button class="tab" v-on:click="makeActive('fansEntourage')">FANS Entourage</button>
+      </ul>
     </div>
+
+    <div class="tabcontent" v-show="isActiveTab('fansInterest')">
+      <InterestChart :interests="orderedVals"/>
+    </div>
+
+    <div class="tabcontent" v-show="isActiveTab('fansEntourage')">
+      <!-- <h3>Entourage component</h3> -->
+      <ArcSubscription/>
+      <NewFansChart/>
+    </div>
+
+    
+
   </div>
 </template>
 
@@ -35,13 +55,17 @@
 import { auth, db } from '../main'
 import InterestChart from "./InterestChart";
 import FanLocation from "./FanLocation";
+import ArcSubscription from "./ArcSubscription"
+import NewFansChart from "./NewFansChart"
 import _ from 'lodash';
 
 export default {
   name: 'Fans',
   components: {
     InterestChart,
-    FanLocation
+    FanLocation,
+    ArcSubscription,
+    NewFansChart
   },
   data () {
     return {
@@ -66,7 +90,8 @@ export default {
         {name: "skiing", value: 76}, {name: "sports", value: 1200}, {name: "swimming", value: 865}, 
         {name: "travel", value: 764}, {name: "volunteer", value: 235}
       ],
-      users: []
+      users: [],
+      choice: ''
     }
   },
   firestore () {
@@ -136,6 +161,12 @@ export default {
     // Gets top 10 interests of fans
     getInterests(arr) {
       return arr.slice(0, 10);
+    },
+    makeActive(val) {
+      this.choice = val
+    },
+    isActiveTab(val) {
+      return this.choice === val
     }
   }
 }
@@ -143,6 +174,29 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.tab {
+  background-color: #555;
+  color: white;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 17px;
+  width: 25%;
+}
+.tab:hover {
+  background-color: #A5A5A5;
+}
+.tab:focus {
+  background-color:#848484;
+}
+.tabcontent {
+  background-color:#848484;
+  /* background-color: beige */
+  /* background-color:white; */
+}
+
 h1, h2 {
   font-weight: normal;
 }
@@ -156,18 +210,5 @@ li {
 }
 a {
   color: #42b983;
-}
-
-/* Create two equal columns that floats next to each other */
-.column {
-    width: 50%;
-    padding: 10px;
-}
-
-/* Clear floats after the columns */
-.row:after {
-    content: "";
-    display: table;
-    clear: both;
 }
 </style>
