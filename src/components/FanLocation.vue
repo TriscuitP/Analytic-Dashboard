@@ -1,12 +1,5 @@
 <template>
 	<div class="map"></div>
-	<!-- <svg class="map" width="950" height="500"></svg> -->
-  <!-- <svg class="map"></svg> -->
-	<!-- <div class="map">
-		<div id="tooltip-container"></div>
-
-		<div id="canvas-svg"></div>
-	</div> -->
 </template>
 
 <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
@@ -29,26 +22,14 @@ export default {
 	},
 	mounted() {
     this.renderMap();
-    
-    // d3.json("https://unpkg.com/us-atlas@1/us/10m.json", this.renderMap());
 	},
   methods: {
     renderMap() {
-
-      // Might use this: https://d3js.org/us-10m.v1.json
-
       var width = 560,
           height = 350;
 
-      // var projection = d3.geoAlbersUsa()
-      //                     // .translate([width/2, height/2])    // translate to center of screen
-      //                     .scale(1000);          // scale things down so see entire US
-
-      // var path = d3.geoPath()
-      //   .projection(null) //albersUsa projection stated in Make file when creating the topojson data
-
       var radius = d3.scaleSqrt() 
-        .domain([0, 3e6]) // INPUT domain-range of possible input data values
+        .domain([0, 6e6]) // INPUT domain-range of possible input data values
         //To avoid distortion, make sure that the minimum "domain" and "range" values are both 0
         .range([0, 60]); // OUTPUT range of possible output values
 
@@ -84,7 +65,7 @@ export default {
         svg.append('path')
           .datum(topojson.feature(usa, usa.objects.nation))
           .attr('class', 'land')
-          .attr('fill', '#ccc')
+          .attr('fill', '#000000')
           .attr('d', path);
 
         svg.selectAll('.states')
@@ -93,7 +74,7 @@ export default {
           .enter().append('path')
           .attr('id', function(d) { return d.id; })
           .attr("class", "states states-hover")
-          .attr('fill', '#aec7e8')
+          .attr('fill', '#000000')
           .attr('d', path)
 
           //add Tool Tip
@@ -103,8 +84,6 @@ export default {
               .style('left', (d3.event.pageX) + 'px')
               .style('top', (d3.event.pageY) + 'px')  
             this.tempColor = this.style.fill; //store current color
-
-            // console.log(d.properties.name)
             
             if(d.properties.name != null || d.properties.name != undefined){
               toolTip.html(
@@ -132,7 +111,7 @@ export default {
             return a !== b; 
           })) //topojson.mesh
           .attr('class', 'border-states')
-          .attr('stroke', '#fff')
+          .attr('stroke', '#383838')
           .attr('fill', 'none')
           .attr('stroke-linejoin', 'round')
           .attr('stroke-linecap', 'round')
@@ -167,115 +146,6 @@ export default {
       }).catch(function(error) {
         if (error) return console.log(error);
       });
-
-      // ==============================
-
-      // var width = 960,
-      //     height = 600;
-
-      // var formatNumber = d3.format(",.0f");
-
-      // var path = d3.geoPath()
-      //     .projection(null);
-
-      // var radius = d3.scaleSqrt()
-      //     .domain([0, 1e6])
-      //     .range([0, 15]);
-
-      // var svg = d3.select(".map").append("svg")
-      //     .attr("width", width)
-      //     .attr("height", height);
-
-      // var legend = svg.append("g")
-      //     .attr("class", "legend")
-      //     .attr("transform", "translate(" + (width - 50) + "," + (height - 20) + ")")
-      //   .selectAll("g")
-      //     .data([1e6, 5e6, 1e7])
-      //   .enter().append("g");
-
-      // legend.append("circle")
-      //     .attr("fill", "none")
-      //     .attr("stroke", "#ccc")
-      //     .attr("cy", function(d) { return -radius(d); })
-      //     .attr("r", radius);
-
-      // legend.append("text")
-      //     .attr("fill", "black")
-      //     .attr("font", "10px sans-serif")
-      //     .attr("text-anchor", "middle")
-      //     .attr("y", function(d) { return -2 * radius(d); })
-      //     .attr("dy", "1.3em")
-      //     .text(d3.format(".1s"));
-
-      // d3.json('https://d3js.org/us-10m.v1.json').then(function(us) {
-
-      //   svg.append("path")
-      //       .datum(topojson.feature(us, us.objects.nation))
-      //       .attr("class", "land")
-      //       .attr("fill", "#ddd")
-      //       .attr("d", path);
-
-      //   svg.append("path")
-      //       .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
-      //       .attr("class", "border border--state")
-      //       .attr("fill", "none")
-      //       .attr("stroke", "#fff")
-      //       .attr("stroke-linejoin", "round")
-      //       .attr("stroke-linecap", "round")
-      //       .attr("d", path);
-
-      //   // svg.append("g")
-      //   //     .attr("class", "bubble")
-      //   //     .attr("fill", "rgb(250, 49, 65)")
-      //   //     .attr("fill-opacity", ".5")
-      //   //   .selectAll("circle")
-      //   //     .data(topojson.feature(us, us.objects.counties).features.sort(function(a, b) { return b.properties.population - a.properties.population; }))
-      //   //   .enter().append("circle")
-      //   //     .attr("transform", d => "translate(" + path.centroid(d) + ")")
-      //   //     .attr("r", "1.9");
-
-      //   svg.append("g")
-      //       .attr("class", "bubble")
-      //       .attr("fill", "rgb(250, 49, 65)")
-      //       .attr("fill-opacity", ".5")
-      //     .selectAll("circle")
-      //       .data(topojson.feature(us, us.objects.counties).features.sort(function(a, b) { return b.properties.population - a.properties.population; }))
-      //     .enter().append("circle")
-      //       .attr("transform", d => "translate(" + path.centroid(d) + ")")
-      //       .attr("r", d => radius(d.properties.population));
-            
-      // }).catch(function(error) {
-      //   if (error) return console.log(error);
-      // });
-
-      // d3.select(self.frameElement).style("height", height + "px");
-
-      // ================================
-
-			// // D3 Projection
-			// var projection = d3.geoAlbersUsa(); // scale things down so see entire US
-			// this.projection = projection;
-			
-			// // D3 US States map
-			// fetch('https://s3-us-west-2.amazonaws.com/s.cdpn.io/39255/us-states.json')
-			// 	.then( response => response.json() )
-			// 	.then( (states) => {
-
-			// 	// Define path generator
-			// 	var path = d3.geoPath() // path generator that will convert GeoJSON to SVG paths
-			// 	.projection(projection); // tell path generator to use albersUsa projection
-
-			// 	// Bind the data to the SVG and create one path per GeoJSON feature
-			// 	var svg = d3.select(".map");
-
-			// 	svg.selectAll("path")
-			// 		.data(states.features)
-			// 		.enter()
-			// 		.append("path")
-			// 		.attr("d", path);
-      // });
-      
-      // ================================
 			
 		}
 	}

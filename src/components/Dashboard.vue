@@ -27,7 +27,7 @@
         <button class="tab" v-on:click="makeActive('eventsActive')">Events</button>
       </ul>
     </div>
-
+    <br> <!-- fills whitespace with background color -->
     <div class="tabcontent" v-show="isActiveTab('fansActive')">
       <Fans/>
     </div>
@@ -73,15 +73,21 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .header {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background-color: #333;
+  /* margin: 0;
+  padding: 0; */
+  /* overflow: hidden; */
+  background-color: #000000;
   /* color: rgb(250, 49, 65); */
   /* position: fixed; /* Set the navbar to fixed position */
   top: 0; /* Position the navbar at the top of the page */
   width: 100%; /* Full width */
 }
+.title {
+  background-color: #000000;
+  overflow: hidden;
+  text-align: center;
+}
+
 .homelink {
   text-decoration: none;
   color: rgb(250, 49, 65);
@@ -123,7 +129,7 @@ export default {
     display: block;
 }
 .tab {
-  background-color: #555;
+  background-color: #000000;
   color: white;
   float: left;
   border: none;
@@ -140,9 +146,7 @@ export default {
   background-color:#848484;
 }
 .tabcontent {
-  background-color:#848484;
-  /* background-color: beige */
-  /* background-color:white; */
+  background-color:#383838;
 }
 h1, h2 {
   font-weight: normal;

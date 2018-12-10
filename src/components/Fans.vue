@@ -1,56 +1,73 @@
 <template>
   <div class="fansboard">
-    <h1>{{msg}}</h1>
-
-    <div class="fancount">
-      <p>Total number of fans:</p>
-      <p>{{totalFans}}</p>
-      <!-- <NewFansChart/> -->
-    </div>
-
     <div class="geo">
+      <div style="padding-top: 30px;">FANS</div>
+      <div style="color: #FD2D3A; font-size: 30px;">{{totalFans}}</div>
       <FanLocation/>
     </div>
 
-    <!-- <div class="aftermap" style="background-color :#848484;">
-      <div class="agecount" style="float: left; width: 50%;">
-        <h3>Age Groups:</h3>
-        <ul v-for="(a, idx) in ageGroups" :key="idx">
-          <p>{{a.group}}: {{a.number}}</p>
+    <div class="stats">
+      <div class="nav">
+        <ul>
+          <button class="tab" v-on:click="makeActive('fansInterest')">FANS Interest</button>
+          <button class="tab" v-on:click="makeActive('fansEntourage')">FANS Entourage</button>
         </ul>
       </div>
-      <div class="passion" style="float: right; width: 50%;">
-        <h3>Popular Interests:</h3>
-        <InterestChart :interests="orderedVals"/>
+
+      <div class="tabcontent" v-show="isActiveTab('fansInterest')" style="height: 365px">
+        <InterestChart :interests="orderedVals" style="float: left; padding-left: 90px;"/>
       </div>
-    </div> -->
 
-    <div class="nav">
-      <ul>
-        <button class="tab" v-on:click="makeActive('fansInterest')">FANS Interest</button>
-        <button class="tab" v-on:click="makeActive('fansEntourage')">FANS Entourage</button>
-      </ul>
+      <div class="tabcontent" v-show="isActiveTab('fansEntourage')">
+        <ArcSubscription style="width: 50%; float:left;"/>
+        <div style="width: 50%; float:left;">
+          <div class="nav" style="float:left">
+            <ul>
+              <button class="tab2" v-on:click="makeActiveYear('2017')">2017</button>
+              <button class="tab2" v-on:click="makeActiveYear('2018')">2018</button>
+              <button class="tab2" v-on:click="makeActiveYear('2019')">2019</button>
+              <button class="tab2" v-on:click="makeActiveYear('2020')">2020*</button>
+            </ul>
+          </div>
+
+          <div class="tabcontent" v-show="isActiveTabYear('2017')">
+            <div style="padding-top: 90px; padding-right: 40px">
+              <div style="text-align: right; font-size: 13px">TOTAL EARNINGS</div>
+              <div style="text-align: right; font-weight: bold; font-size: 35px">$110,534.00</div>
+            </div>
+          </div>
+
+          <div class="tabcontent" v-show="isActiveTabYear('2018')">
+            <div style="padding-top: 90px; padding-right: 40px">
+              <div style="text-align: right; font-size: 13px">DECEMBER EARNINGS</div>
+              <div style="text-align: right; font-weight: bold; font-size: 35px">$13,201.00</div>
+              <div style="text-align: right; font-size: 13px">EXPECTED*</div>
+            </div>
+          </div>
+
+          <div class="tabcontent" v-show="isActiveTabYear('2019')">
+            2019
+          </div>
+
+          <div class="tabcontent" v-show="isActiveTabYear('2020')">
+            2020
+          </div>
+        </div>
+        <!-- <NewFansChart/> -->
+      </div>
     </div>
-
-    <div class="tabcontent" v-show="isActiveTab('fansInterest')">
-      <InterestChart :interests="orderedVals"/>
-    </div>
-
-    <div class="tabcontent" v-show="isActiveTab('fansEntourage')">
-      <!-- <h3>Entourage component</h3> -->
-      <ArcSubscription/>
+    <!-- <br> -->
+    <div v-show="isActiveTab('fansEntourage')" style="clear:both;">
       <NewFansChart/>
     </div>
-
     
-
   </div>
 </template>
 
 <script src="https://d3js.org/d3.v5.js"></script>
-<script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
 <script src="https://d3js.org/topojson.v2.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
+<script src="https://unpkg.com/vue/dist/vue.min.js"></script>
 <script>
 import { auth, db } from '../main'
 import InterestChart from "./InterestChart";
@@ -72,13 +89,19 @@ export default {
       msg: 'Fans Data',
       userId: '',
       fans: [],
-      totalFans: 6500,
+      fansHome: [],
+      followDates: [],
+      subscribers: [],
+      // Dummy Data
+      totalFans: 6545329,
       allFollowers: [],
+      // Dummy Data (Change values to zero when connecting to firebase)
       ageGroups: [
         {group: "0-18", number: 3000},
         {group: "25-34", number: 2500},
         {group: "34-100", number: 1000}
-      ], //TODO: Male/Female
+      ],
+      // Dummy Data (Change values to zero when connecting to firebase)
       interestsVals: [
         {name: "art", value: 60}, {name: "beauty", value: 67}, {name: "cycling", value: 655},
         {name: "dancing", value: 456}, {name: "edm", value: 875}, {name: "excercise", value: 40},
@@ -91,11 +114,12 @@ export default {
         {name: "travel", value: 764}, {name: "volunteer", value: 235}
       ],
       users: [],
-      choice: ''
+      // Choice and year used for tabs
+      choice: 'fansInterest',
+      year: ''
     }
   },
   firestore () {
-    // this.userId = auth.currentUser.uid
     return {
       allFollowers: db.collection("follows"),
       users: db.collection("users")
@@ -122,6 +146,7 @@ export default {
   },
   methods: {
     // Calculates age groups of fans
+    // Might be better to sort list and just use one loop to go through both lists
     calculateAgeGroups() {
       for (let index = 0; index < this.fans.length; index++) {
         var dateString = getUserBirth(this.fans[index]);
@@ -144,29 +169,71 @@ export default {
     // Gets user birth date from users list
     getUserBirth(fan) {
       for (let index = 0; index < this.users.length; index++) {
-        if(this.users.uid == fan.follower_id)
+        if(this.users[index].uid == fan.follower_id)
           return this.users.birth_date;
       }
     },
     // Adding to interestVal list
     countInterests() {
       for (let index = 0; index < this.fans.length; index++) {
-        const arr = this.fans[index].interests;
+        const arr = getUserInterest(this.fans[index]);
         for (let index = 0; index < arr.length; index++) {
           if (arr[index] == true)
             this.interestsVals[index].value++;          
         }
       }
     },
+    getUserInterest(fan) {
+      for (let index = 0; index < this.users.length; index++) {
+        if(this.users[index].uid == fan.follower_id)
+          return this.users.interests;
+      }
+    },
     // Gets top 10 interests of fans
     getInterests(arr) {
       return arr.slice(0, 10);
     },
+    // Finds location of all fans and store in list
+    // Might be better to sort list and just use one loop to go through both lists
+    calculatePopulation() {
+      for (let index = 0; index < this.fans.length; index++) {
+        var dateTown = getUserBirth(this.fans[index]);
+        this.fansHome.push(dateTown);
+      }
+    },
+    // Gets location of fan
+    getLocation(fan) {
+      for (let index = 0; index < this.users.length; index++) {
+        if(this.users.uid == fan.follower_id)
+          return this.users.hometown;
+      }
+    },
+    // Get dates of when fans followed
+    getFollowDate() {
+      for (let index = 0; index < this.fans.length; index++) {
+        this.followDates.push(this.fans[index].created_date);     
+      }
+    },
+    // Get dates of when fans subscribed 
+    getSubscribers() {
+      for (let index = 0; index < this.fans.length; index++) {
+        this.subscribers.push(this.fans[index].subscribe_date);
+        
+      }
+    },
+
+    // For tabs
     makeActive(val) {
       this.choice = val
     },
+    makeActiveYear(val) {
+      this.year = val
+    },
     isActiveTab(val) {
       return this.choice === val
+    },
+    isActiveTabYear(val) {
+      return this.year === val
     }
   }
 }
@@ -174,15 +241,40 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.geo {
+  width: 50%;
+  float: left;
+  background-color: #383838;
+}
+.stats {
+  width: 50%;
+  float: left;
+  overflow: hidden;
+  /* margin: 0 auto; */
+  background-color: #383838;
+}
+
 .tab {
   background-color: #555;
+  color: white;
+  /* float: left; */
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 20px;
+  /* width: 25%; */
+}
+.tab2 {
+  background-color: #383838;
   color: white;
   float: left;
   border: none;
   outline: none;
   cursor: pointer;
   padding: 14px 16px;
-  font-size: 17px;
+  font-size: 12px;
+  height: 50px;
   width: 25%;
 }
 .tab:hover {
@@ -191,10 +283,13 @@ export default {
 .tab:focus {
   background-color:#848484;
 }
+.tab2:focus {
+  /* background-color:#848484; */
+  font-size: 20px;
+  font-weight: bold;
+}
 .tabcontent {
-  background-color:#848484;
-  /* background-color: beige */
-  /* background-color:white; */
+  background-color:#383838;
 }
 
 h1, h2 {
